@@ -1,0 +1,50 @@
+html,
+body {
+    width: 100%;
+    height: 100vh;
+    margin: 0;
+    overflow: hidden;
+    background: grey;
+    flex-direction: column;
+}
+
+.centered {
+    margin: auto;
+    text-align: center;
+}
+
+.boxing_rounds {
+    margin: 0;
+    font-size: 5vw;
+}
+
+.state {
+    margin: 0;
+    font-size: 10vw;
+}
+
+.fight {
+    color: green;
+}
+
+.rest {
+    color: red;
+}
+
+.prepare {
+    color: yellow;
+}
+
+.finished {
+    color: orange;
+}
+
+.timer {
+    margin: 0;
+    font-size: 25vw;
+}
+
+.btn {
+    padding: 15px 32px;
+    background-color: #4CAF50;
+}
