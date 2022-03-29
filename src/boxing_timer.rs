@@ -46,6 +46,7 @@ impl BoxingTimer {
     }
 
     fn prepare_to_fight(&mut self) {
+        self.timeout = self.boxing_rounds.fight;
         self.state = State::Fight;
         BoxingBell::play();
     }
