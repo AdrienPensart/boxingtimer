@@ -18,7 +18,7 @@ pub struct BoxingRounds {
 }
 
 impl BoxingRounds {
-    pub fn from_query(params: UrlSearchParams) -> Self {
+    pub fn from_query(params: &UrlSearchParams) -> Self {
         let mut boxing_rounds = BoxingRounds::default();
         let _ = params
             .get("waiting")
@@ -69,14 +69,14 @@ pub fn rendered_at(props: &BoxingRounds) -> Html {
     html! {
         <>
             <span class="fight">
-                { format!("{} rounds ({}s)", &rounds, &fight) }
+                { format!("{rounds} rounds ({fight}s)") }
             </span>
             <br />
             <span class="wait">
-                { format!("Wait ({}s) ", &wait) }
+                { format!("Wait ({wait}s) ") }
             </span>
             <span class="rest">
-                { format!("Rest ({}s)", &rest) }
+                { format!("Rest ({rest}s)") }
             </span>
         </>
     }

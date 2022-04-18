@@ -9,7 +9,7 @@ pub fn app() -> Html {
         .and_then(|href| web_sys::Url::new(&href).ok())
         .map(|url| {
             let search_params = url.search_params();
-            let boxing_rounds = BoxingRounds::from_query(search_params);
+            let boxing_rounds = BoxingRounds::from_query(&search_params);
             html! {
                 <BoxingTimer ..boxing_rounds />
             }

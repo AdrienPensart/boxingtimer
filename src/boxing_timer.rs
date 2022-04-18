@@ -115,6 +115,14 @@ impl BoxingTimer {
             self.round = 0
         }
     }
+
+    fn toggle_text(&self) -> String {
+        if self.paused {
+            "Start".to_string()
+        } else {
+            "Pause".to_string()
+        }
+    }
 }
 
 impl Component for BoxingTimer {
@@ -127,11 +135,25 @@ impl Component for BoxingTimer {
             let interval = ctx.props().interval.as_millis();
             Some(Interval::new(interval as u32, move || link.send_message(Msg::Tick)))
         };
-        BoxingTimer::new(
+        let mut boxing_timer = BoxingTimer::new(
             ctx.props().wait,
             ctx.props().interval,
             tick
-        )
+        );
+
+        web_sys::window()
+            .and_then(|window| window.location().href().ok())
+            .and_then(|href| web_sys::Url::new(&href).ok())
+            .map(|url| {
+                let search_params = url.search_params();
+                // let boxing_rounds = BoxingRounds::from_query(&search_params);
+
+                let _ = search_params
+                    .get("round")
+                    .and_then(|round| round.parse::<u16>().ok())
+                    .map(|round| boxing_timer.round = round);
+            });
+        boxing_timer
     }
 
     fn update(&mut self, ctx: &Context<Self>, msg: Self::Message) -> bool {
@@ -153,12 +175,13 @@ impl Component for BoxingTimer {
 
     fn view(&self, ctx: &Context<Self>) -> Html {
         let state = &self.state.as_ref();
+        let round = &self.round;
         html! {
             <>
                 <div class="controls">
                     <BoxingBell />
                     <button onclick={ctx.link().callback(|_| Msg::Toggle)} class="btn">
-                        { if self.paused { "Start" } else { "Pause" }  }
+                        { self.toggle_text()  }
                     </button>
                     <button onclick={ctx.link().callback(|_| Msg::Reset)} class="btn">
                         { "Reset" }
@@ -166,7 +189,7 @@ impl Component for BoxingTimer {
                 </div>
                 <ul class="centered">
                     <li class="boxing_rounds">
-                        <span class="fight">{ format!("{}/", &self.round) }</span>
+                        <span class="fight">{ format!("{round}/") }</span>
                         <RenderedBoxingRounds ..*ctx.props() />
                     </li>
                     <li class={format!("state {state}")}>
