@@ -4,18 +4,20 @@ body {
     height: 100vh;
     margin: 0;
     overflow: hidden;
-    background: grey;
+    background: black;
     flex-direction: column;
+    font-weight: bold;
 }
 
 .centered {
     margin: auto;
     text-align: center;
+    list-style: none;
 }
 
 .boxing_rounds {
     margin: 0;
-    font-size: 5vw;
+    font-size: 4vw;
 }
 
 .state {
@@ -24,27 +26,34 @@ body {
 }
 
 .fight {
-    color: green;
+    color: #fa3c4c;
 }
 
 .rest {
-    color: red;
+    color: #d696bb;
 }
 
-.prepare {
-    color: yellow;
+.wait {
+    color: #ffc300;
 }
 
 .finished {
-    color: orange;
+    color: #44bec7;
 }
 
 .timer {
-    margin: 0;
     font-size: 25vw;
 }
 
+.controls {
+    margin: 0 auto;
+    float: left;
+    display: flex;
+    flex-direction: column;
+}
+
 .btn {
-    padding: 15px 32px;
+    padding: 20px 40px;
     background-color: #4CAF50;
+    font-size: 2vw;
 }

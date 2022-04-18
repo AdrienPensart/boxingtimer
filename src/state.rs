@@ -1,14 +1,14 @@
 use std::fmt;
 use strum_macros::AsRefStr;
 
-#[derive(AsRefStr, Debug)]
+#[derive(AsRefStr, Eq, PartialEq, Debug)]
 pub enum State {
-    #[strum(serialize = "prepare")]
-    Prepare,
+    #[strum(serialize = "wait")]
+    Waiting,
     #[strum(serialize = "fight")]
-    Fight,
+    Fighting,
     #[strum(serialize = "rest")]
-    Rest,
+    Resting,
     #[strum(serialize = "finished")]
     Finished,
 }
@@ -22,10 +22,10 @@ impl fmt::Display for State {
             Some(f) => f.to_uppercase().collect::<String>() + chars.as_str(),
         };
         match self {
-            Self::Prepare => write!(f, "{}.", capitalized),
-            Self::Fight => write!(f, "{}!", capitalized),
-            Self::Rest => write!(f, "{}...", capitalized),
-            Self::Finished => write!(f, "{}.", capitalized),
+            Self::Waiting => write!(f, "{capitalized}."),
+            Self::Fighting => write!(f, "{capitalized}!"),
+            Self::Resting => write!(f, "{capitalized}..."),
+            Self::Finished => write!(f, "{capitalized}."),
         }
     }
 }

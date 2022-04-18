@@ -1,13 +1,12 @@
-use std::fmt;
 use std::time::Duration;
 use serde::{Deserialize, Serialize};
-use yew::Properties;
+use yew::{html, Properties, function_component};
 use web_sys::UrlSearchParams;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Properties)]
 pub struct BoxingRounds {
     /// We let some time to prepare
-    pub waiting: Duration,
+    pub wait: Duration,
     /// Duration of a round
     pub fight: Duration,
     /// Duration of rest between each round
@@ -24,7 +23,7 @@ impl BoxingRounds {
         let _ = params
             .get("waiting")
             .and_then(|waiting| waiting.parse::<u64>().ok())
-            .map(|waiting| boxing_rounds.waiting = Duration::from_secs(waiting));
+            .map(|waiting| boxing_rounds.wait = Duration::from_secs(waiting));
 
         let _ = params
             .get("fight")
@@ -52,7 +51,7 @@ impl BoxingRounds {
 impl Default for BoxingRounds {
     fn default() -> Self {
         Self {
-            waiting: Duration::from_secs(5),
+            wait: Duration::from_secs(5),
             fight: Duration::from_secs(180),
             rest: Duration::from_secs(60),
             interval: Duration::from_millis(1000),
@@ -61,12 +60,24 @@ impl Default for BoxingRounds {
     }
 }
 
-impl fmt::Display for BoxingRounds {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let waiting = self.waiting.as_secs();
-        let fight = self.fight.as_secs();
-        let rest = self.rest.as_secs();
-        write!(f, "{} rounds ({}s) \nPrepare({}s) Rest({}s)", self.rounds, fight, waiting, rest)
+#[function_component(RenderedBoxingRounds)]
+pub fn rendered_at(props: &BoxingRounds) -> Html {
+    let rounds = props.rounds;
+    let wait = props.wait.as_secs();
+    let fight = props.fight.as_secs();
+    let rest = props.rest.as_secs();
+    html! {
+        <>
+            <span class="fight">
+                { format!("{} rounds ({}s)", &rounds, &fight) }
+            </span>
+            <br />
+            <span class="wait">
+                { format!("Wait ({}s) ", &wait) }
+            </span>
+            <span class="rest">
+                { format!("Rest ({}s)", &rest) }
+            </span>
+        </>
     }
 }
-
