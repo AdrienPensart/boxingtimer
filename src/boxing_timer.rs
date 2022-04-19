@@ -1,11 +1,13 @@
+extern crate lenient_bool;
 use std::fmt;
 use std::time::Duration;
+use std::str::FromStr;
 use gloo::timers::callback::Interval;
 use gloo::console::{log, Timer};
 use yew::{html, Component, Context, Html};
+use lenient_bool::LenientBool;
 use crate::state::State;
-use crate::boxing_rounds::{BoxingRounds, RenderedBoxingRounds};
-use crate::boxing_bell::{BoxingBell};
+use crate::boxing_bell::BoxingBell;
 
 pub enum Msg {
     Tick,
@@ -13,15 +15,40 @@ pub enum Msg {
     Reset,
 }
 
+fn get_param_or<T: FromStr>(param: &str, default: T) -> T {
+    web_sys::window()
+        .and_then(|window| window.location().href().ok())
+        .and_then(|href| web_sys::Url::new(&href).ok())
+        .and_then(|url| url.search_params().get(param))
+        .and_then(|param| param.parse::<T>().ok())
+        .unwrap_or(default)
+}
+
 #[derive(Debug)]
 pub struct BoxingTimer {
+    /// Current round
+    round: u64,
+    /// Number of rounds
+    rounds: u64,
+    /// We let some time to prepare
+    wait: Duration,
+    /// Duration of a round
+    fight: Duration,
+    /// Duration of rest between each round
+    rest: Duration,
+    /// Is the timer running ?
     paused: bool,
-    round: u16,
+    /// Current state of training
     state: State,
+    /// Interval between each tick (in milliseconds)
+    interval: Duration,
+    /// Left seconds in current round
     timeout: Duration,
     #[allow(dead_code)]
+    /// Interval betweeen each timer tick
     tick: Interval,
     #[allow(dead_code)]
+    /// Internal timer
     console_timer: Timer<'static>,
 }
 
@@ -34,41 +61,30 @@ impl fmt::Display for BoxingTimer {
 }
 
 impl BoxingTimer {
-    fn new(timeout: Duration, interval: Duration, tick: Option<Interval>) -> Self {
-        Self {
-            round: 0,
-            paused: false,
-            state: State::Waiting,
-            timeout,
-            tick: tick.unwrap_or_else(|| Interval::new(interval.as_millis() as u32, || log!("Boxing timer not set yet"))),
-            console_timer: Timer::new("Console Timer"),
-        }
-    }
-
-    fn reset(&mut self, wait: Duration) {
+    fn reset(&mut self) {
         log!("reseting timer");
         self.round = 0;
-        self.timeout = wait;
+        self.timeout = self.wait;
         self.state = State::Waiting;
     }
 
-    fn prepare_to_fight(&mut self, fight: Duration) {
+    fn prepare_to_fight(&mut self) {
         log!("prepare to fight !");
-        self.timeout = fight;
+        self.timeout = self.fight;
         self.state = State::Fighting;
         BoxingBell::play();
     }
 
-    fn rest_to_fight(&mut self, fight: Duration) {
+    fn rest_to_fight(&mut self) {
         log!("rest to fight !");
-        self.timeout = fight;
+        self.timeout = self.fight;
         self.state = State::Fighting;
         BoxingBell::play();
     }
 
-    fn fight_to_rest(&mut self, rest: Duration) {
+    fn fight_to_rest(&mut self) {
         log!("fight to rest !");
-        self.timeout = rest;
+        self.timeout = self.rest;
         self.state = State::Resting;
         BoxingBell::play();
     }
@@ -79,39 +95,39 @@ impl BoxingTimer {
         BoxingBell::play();
     }
 
-    fn update(&mut self, boxing_rounds: &BoxingRounds) {
+    fn update(&mut self) {
         if self.paused {
             return
         }
         if !self.timeout.is_zero() {
-            self.timeout = self.timeout.saturating_sub(boxing_rounds.interval);
+            self.timeout = self.timeout.saturating_sub(self.interval);
             return
         }
         match self.state {
             State::Waiting => {
                 self.round += 1;
-                self.prepare_to_fight(boxing_rounds.fight);
+                self.prepare_to_fight();
             }
             State::Resting => {
                 self.round += 1;
-                if self.round > boxing_rounds.rounds {
+                if self.round > self.rounds {
                     self.state = State::Finished;
                 } else {
-                    self.rest_to_fight(boxing_rounds.fight);
+                    self.rest_to_fight();
                 }
             }
             State::Fighting => {
-                if self.round == boxing_rounds.rounds {
+                if self.round == self.rounds {
                     self.fight_to_finished();
                 } else {
-                    self.fight_to_rest(boxing_rounds.rest);
+                    self.fight_to_rest();
                 }
             }
             State::Finished => {
                 self.timeout = Duration::from_secs(0);
             }
         }
-        if self.round > boxing_rounds.rounds {
+        if self.round > self.rounds {
             self.round = 0
         }
     }
@@ -127,39 +143,38 @@ impl BoxingTimer {
 
 impl Component for BoxingTimer {
     type Message = Msg;
-    type Properties = BoxingRounds;
+    type Properties = ();
 
     fn create(ctx: &Context<Self>) -> Self {
-        let tick = {
-            let link = ctx.link().clone();
-            let interval = ctx.props().interval.as_millis();
-            Some(Interval::new(interval as u32, move || link.send_message(Msg::Tick)))
-        };
-        let mut boxing_timer = BoxingTimer::new(
-            ctx.props().wait,
-            ctx.props().interval,
-            tick
-        );
+        let link = ctx.link().clone();
 
-        web_sys::window()
-            .and_then(|window| window.location().href().ok())
-            .and_then(|href| web_sys::Url::new(&href).ok())
-            .map(|url| {
-                let search_params = url.search_params();
-                // let boxing_rounds = BoxingRounds::from_query(&search_params);
+        let round = get_param_or("round", 0);
+        let rounds = get_param_or("rounds", 12);
+        let wait = get_param_or("wait", 5);
+        let fight = get_param_or("fight", 180);
+        let rest = get_param_or("rest", 60);
+        let interval = get_param_or("interval", 1000);
+        let paused = get_param_or::<LenientBool>("paused", LenientBool(false));
 
-                let _ = search_params
-                    .get("round")
-                    .and_then(|round| round.parse::<u16>().ok())
-                    .map(|round| boxing_timer.round = round);
-            });
-        boxing_timer
+        BoxingTimer {
+            round,
+            rounds,
+            wait: Duration::from_secs(wait),
+            fight: Duration::from_secs(fight),
+            rest: Duration::from_secs(rest),
+            paused: paused.into(),
+            state: State::Waiting,
+            interval: Duration::from_millis(interval),
+            timeout: Duration::from_secs(wait),
+            tick: Interval::new(interval as u32, move || link.send_message(Msg::Tick)),
+            console_timer: Timer::new("Console Timer"),
+        }
     }
 
-    fn update(&mut self, ctx: &Context<Self>, msg: Self::Message) -> bool {
+    fn update(&mut self, _ctx: &Context<Self>, msg: Self::Message) -> bool {
         match msg {
             Msg::Tick => {
-                self.update(ctx.props());
+                self.update();
                 true
             },
             Msg::Toggle => {
@@ -167,7 +182,7 @@ impl Component for BoxingTimer {
                 true
             },
             Msg::Reset => {
-                self.reset(ctx.props().wait);
+                self.reset();
                 true
             }
         }
@@ -176,6 +191,10 @@ impl Component for BoxingTimer {
     fn view(&self, ctx: &Context<Self>) -> Html {
         let state = &self.state.as_ref();
         let round = &self.round;
+        let rounds = self.rounds;
+        let wait = self.wait.as_secs();
+        let fight = self.fight.as_secs();
+        let rest = self.rest.as_secs();
         html! {
             <>
                 <div class="controls">
@@ -189,8 +208,16 @@ impl Component for BoxingTimer {
                 </div>
                 <ul class="centered">
                     <li class="boxing_rounds">
-                        <span class="fight">{ format!("{round}/") }</span>
-                        <RenderedBoxingRounds ..*ctx.props() />
+                        <span class="fight">
+                            { format!("{round}/{rounds} rounds ({fight}s)") }
+                        </span>
+                        <br />
+                        <span class="wait">
+                            { format!("Wait ({wait}s) ") }
+                        </span>
+                        <span class="rest">
+                            { format!("Rest ({rest}s)") }
+                        </span>
                     </li>
                     <li class={format!("state {state}")}>
                         { &self.state }

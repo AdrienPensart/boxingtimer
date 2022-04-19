@@ -21,6 +21,7 @@ strum_macros = "0.24"
 serde = "1.0.136"
 serde_urlencoded = "0.7.1"
 wasm-bindgen-futures = "0.4.29"
+lenient_bool = "0.1.1"
 
 [dependencies.web-sys]
 version = "0.3.56"
