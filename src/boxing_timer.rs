@@ -220,10 +220,10 @@ impl Component for BoxingTimer {
                         </span>
                     </li>
                     <li class={format!("state {state}")}>
-                        { &self.state }
+                        { format!("{}", self.state) }
                     </li>
                     <li class={format!("timer {state}")}>
-                        { &self }
+                        { format!("{}", self) }
                     </li>
                 </ul>
             </>

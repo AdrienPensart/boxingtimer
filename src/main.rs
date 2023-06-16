@@ -5,5 +5,5 @@ pub mod boxing_bell;
 use app::App;
 
 fn main() {
-    yew::start_app::<App>();
+    yew::Renderer::<App>::new().render();
 }
