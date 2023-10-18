@@ -1,0 +1,28 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: boxingtimer
+  labels:
+    app: boxingtimer
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: boxingtimer
+  template:
+    metadata:
+      labels:
+        app: boxingtimer
+    spec:
+      containers:
+        - name: boxingtimer
+          image: crunchengine/warfire:boxingtimer
+          resources:
+            limits:
+              memory: "128Mi"
+              cpu: "500m"
+          ports:
+            - containerPort: 80
+      imagePullSecrets:
+        - name: boxingtimer
