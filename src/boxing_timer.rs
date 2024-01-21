@@ -190,7 +190,7 @@ impl Component for BoxingTimer {
     }
 
     fn view(&self, ctx: &Context<Self>) -> Html {
-        let state = &self.state.as_ref();
+        let state = &self.state;
         let round = &self.round;
         let rounds = self.rounds;
         let wait = self.wait.as_secs();
