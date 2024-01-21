@@ -1,5 +1,5 @@
 [package]
-name = "trunk-template"
+name = "boxingtimer"
 version = "0.1.0"
 edition = "2021"
 description = "Template for starting a Yew project using Trunk"
@@ -12,7 +12,7 @@ categories = ["gui", "wasm", "web-programming"]
 [dependencies]
 js-sys = "0.3.56"
 wasm-bindgen = "0.2.79"
-gloo = "0.10.0"
+gloo = "0.11.0"
 strum = "0.25"
 strum_macros = "0.25"
 serde = "1.0.136"
@@ -32,3 +32,14 @@ features = [
     "Element",
     "HtmlAudioElement"
 ]
+
+[lints.rust]
+unsafe_code = "forbid"
+
+[lints.clippy]
+enum_glob_use = "deny"
+pedantic = "deny"
+nursery = "deny"
+unwrap_used = "deny"
+must_use_candidate = "allow"
+missing_errors_doc = "allow"

@@ -17,12 +17,11 @@ impl fmt::Display for State {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let repr = self.as_ref();
         let mut chars = repr.chars();
-        let capitalized = match chars.next() {
-            None => String::new(),
-            Some(f) => f.to_uppercase().collect::<String>() + chars.as_str(),
-        };
+        let capitalized = chars.next().map_or_else(String::new, |f| {
+            f.to_uppercase().collect::<String>() + chars.as_str()
+        });
         match self {
-            Self::Waiting => write!(f, "{capitalized}."),
+            Self::Waiting => write!(f, "{capitalized}"),
             Self::Fighting => write!(f, "{capitalized}!"),
             Self::Resting => write!(f, "{capitalized}..."),
             Self::Finished => write!(f, "{capitalized}."),

@@ -1,5 +1,5 @@
-use js_sys::Error;
 use gloo::console::log;
+use js_sys::Error;
 use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::spawn_local;
 use yew::{html, Component, Context, Html};
@@ -20,21 +20,30 @@ fn unmute() -> Result<(), Error> {
 
 fn audio() -> Result<web_sys::HtmlAudioElement, Error> {
     let window = web_sys::window().ok_or_else(|| Error::new("cannot get window"))?;
-    let document = window.document().ok_or_else(|| Error::new("cannot get document"))?;
-    let bell = document.get_element_by_id("bell").ok_or_else(|| Error::new("cannot get bell element"))?;
-    bell.dyn_into::<web_sys::HtmlAudioElement>().map_err(|_| Error::new("cannot convert to audio element"))
+    let document = window
+        .document()
+        .ok_or_else(|| Error::new("cannot get document"))?;
+    let bell = document
+        .get_element_by_id("bell")
+        .ok_or_else(|| Error::new("cannot get bell element"))?;
+    bell.dyn_into::<web_sys::HtmlAudioElement>()
+        .map_err(|_| Error::new("cannot convert to audio element"))
 }
 
 fn play() -> Result<(), Error> {
-    let promise = audio()?.play()?;
-    let future = wasm_bindgen_futures::JsFuture::from(promise);
-    spawn_local(async move { let _ = future.await.map_err(|e| { log!("failed to await future", e)}); });
+    if !muted()? {
+        let promise = audio()?.play()?;
+        let future = wasm_bindgen_futures::JsFuture::from(promise);
+        spawn_local(async move {
+            let _ = future.await.map_err(|e| log!("failed to await future", e));
+        });
+    }
     Ok(())
 }
 
 pub enum BellMsg {
     Play,
-    Toggle
+    Toggle,
 }
 
 pub struct BoxingBell;
@@ -51,16 +60,18 @@ impl BoxingBell {
         match muted() {
             Ok(true) => Self::unmute(),
             Ok(false) => Self::mute(),
-            Err(e) => { log!("unable to mute or unmute bell", e.message()) }
+            Err(e) => {
+                log!("unable to mute or unmute bell", e.message());
+            }
         };
     }
 
     fn mute() {
-         if mute().is_err() {
-             log!("Unable to mute bell");
-         } else {
-             log!("Bell muted");
-         }
+        if mute().is_err() {
+            log!("Unable to mute bell");
+        } else {
+            log!("Bell muted");
+        }
     }
 
     fn unmute() {
@@ -101,7 +112,7 @@ impl Component for BoxingBell {
 
     fn rendered(&mut self, _ctx: &Context<Self>, first_render: bool) {
         if first_render {
-            Self::mute()
+            Self::mute();
         }
     }
 

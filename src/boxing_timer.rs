@@ -1,13 +1,13 @@
 extern crate lenient_bool;
-use std::fmt;
-use std::time::Duration;
-use std::str::FromStr;
-use gloo::timers::callback::Interval;
-use gloo::console::{log, Timer};
-use yew::{html, Component, Context, Html};
-use lenient_bool::LenientBool;
-use crate::state::State;
 use crate::boxing_bell::BoxingBell;
+use crate::state::State;
+use gloo::console::{log, Timer};
+use gloo::timers::callback::Interval;
+use lenient_bool::LenientBool;
+use std::fmt;
+use std::str::FromStr;
+use std::time::Duration;
+use yew::{html, Component, Context, Html};
 
 pub enum Msg {
     Tick,
@@ -97,11 +97,11 @@ impl BoxingTimer {
 
     fn update(&mut self) {
         if self.paused {
-            return
+            return;
         }
         if !self.timeout.is_zero() {
             self.timeout = self.timeout.saturating_sub(self.interval);
-            return
+            return;
         }
         match self.state {
             State::Waiting => {
@@ -128,7 +128,7 @@ impl BoxingTimer {
             }
         }
         if self.round > self.rounds {
-            self.round = 0
+            self.round = 0;
         }
     }
 
@@ -153,10 +153,11 @@ impl Component for BoxingTimer {
         let wait = get_param_or("wait", 5);
         let fight = get_param_or("fight", 180);
         let rest = get_param_or("rest", 60);
-        let interval = get_param_or("interval", 1000);
+        let interval_u32 = get_param_or::<u32>("interval", 1000);
+        let interval_u64 = get_param_or::<u64>("interval", 1000);
         let paused = get_param_or::<LenientBool>("paused", LenientBool(false));
 
-        BoxingTimer {
+        Self {
             round,
             rounds,
             wait: Duration::from_secs(wait),
@@ -164,9 +165,9 @@ impl Component for BoxingTimer {
             rest: Duration::from_secs(rest),
             paused: paused.into(),
             state: State::Waiting,
-            interval: Duration::from_millis(interval),
+            interval: Duration::from_millis(interval_u64),
             timeout: Duration::from_secs(wait),
-            tick: Interval::new(interval as u32, move || link.send_message(Msg::Tick)),
+            tick: Interval::new(interval_u32, move || link.send_message(Msg::Tick)),
             console_timer: Timer::new("Console Timer"),
         }
     }
@@ -176,11 +177,11 @@ impl Component for BoxingTimer {
             Msg::Tick => {
                 self.update();
                 true
-            },
+            }
             Msg::Toggle => {
                 self.paused = !self.paused;
                 true
-            },
+            }
             Msg::Reset => {
                 self.reset();
                 true
